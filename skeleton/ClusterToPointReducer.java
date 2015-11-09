@@ -23,7 +23,8 @@ public class ClusterToPointReducer extends Reducer<Text, Text, Text, Text>
 			}
 			counter ++;
 		}
-
+		// change global variable
 		KMeans.centroids[idIndex] = Point.multiplyScalar(sumpoint, 1 / counter);
+		
 	}
 }

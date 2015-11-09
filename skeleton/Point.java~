@@ -165,10 +165,10 @@ public class Point {
 	}
 //*
 //	// For Testing Purpose
-	public static void main(String[] args){
-		Point p0 = null;
-		p0 = new Point("1 2");
-		System.out.println("Print p0: " + p0.toString());
+//	public static void main(String[] args){
+//		Point p0 = null;
+//		p0 = new Point("1 2");
+//		System.out.println("Print p0: " + p0.toString());
 //		//
 //		Point p1 = new Point(3);
 //		Point p2 = new Point("1 2 3 4");
@@ -181,7 +181,7 @@ public class Point {
 //		//System.out.println("Distance between p2 and p4 is: " + distance(p2, p4));
 //		//System.out.println("Print p2 + p4: " + addPoints(p4, p2));
 //		//System.out.println("Print p2 * 2: " + multiplyScalar(p2, 2));
-	}
+//	}
 //
 
 }

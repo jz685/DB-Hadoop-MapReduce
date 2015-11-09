@@ -12,9 +12,7 @@ import java.io.IOException;
 public class PointToClusterMapper extends Mapper<Text, Text, Text, Text>
 {
 	
-	
 	public void map(Point inputPoint, Text value, Context context) {
-
 		// Assume KMeans.centroids is a array of Point
 		Point[] myCentroIds = KMeans.centroids;
 
@@ -29,5 +27,6 @@ public class PointToClusterMapper extends Mapper<Text, Text, Text, Text>
 		}
 		// Emit Type: (int, Point)
 		context.write(idIndex, inputPoint);
+
 	}
 }
