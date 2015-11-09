@@ -9,7 +9,7 @@ import java.io.IOException;
  * You can modify this class as you see fit.  You may assume that the global
  * centroids have been correctly initialized.
  */
-public class PointToClusterMapper extends Mapper<Text, Text, Text, Text>
+public class PointToClusterMapper extends Mapper<Object, Text, Text, Text>
 {
 	public Text thepoint = new Text();
 	public Text index = new Text();
@@ -27,6 +27,11 @@ public class PointToClusterMapper extends Mapper<Text, Text, Text, Text>
 		}
 		thepoint.set(inputPoint.toString());
 		index.set(String.valueOf(idIndex));
+	
+		// Testing
+		System.out.println("<MAP> value of <Text>index: " + index.toString());
+
+		// Point is intwritable
 		context.write(index, thepoint);
 	}
 }

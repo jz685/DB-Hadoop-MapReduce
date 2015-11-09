@@ -13,19 +13,26 @@ import java.io.IOException;
 public class ClusterToPointReducer extends Reducer<Text, Text, Text, Text>
 {
 
-	public void reduce (int idIndex, Iterable<Point> pointItr, Context context){
+	public void reduce (Text idIndex, Iterable<Text> pointItr, Context context){
 		int counter = 0;
 		Point sumPoint = null;
-		for (Point temp : pointItr){
+
+		//Testing
+		System.out.println("<RED> value of <Text>index: " + idIndex.toString());
+
+		int index = Integer.parseInt(idIndex.toString());
+
+		for (Text temp : pointItr){
+			Point tempPoint = new Point(temp.toString());
 			if (sumPoint == null){
-				sumPoint = new Point(temp);
+				sumPoint = new Point(tempPoint);
 			} else {
-				sumPoint = Point.addPoints(sumPoint, temp);
+				sumPoint = Point.addPoints(sumPoint, tempPoint);
 			}
 			counter ++;
 		}
 		// change global variable
-		KMeans.centroids.set(idIndex, Point.multiplyScalar(sumPoint, 1 / counter));
+		KMeans.centroids.set(index, Point.multiplyScalar(sumPoint, 1 / counter));
 		
 	}
 }
