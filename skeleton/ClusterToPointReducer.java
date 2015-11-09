@@ -2,6 +2,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import java.util.ArrayList;
 
 import java.io.IOException;
 
@@ -17,14 +18,14 @@ public class ClusterToPointReducer extends Reducer<Text, Text, Text, Text>
 		Point sumPoint = null;
 		for (Point temp : pointItr){
 			if (sumPoint == null){
-				sumpoint = new Point(temp);
+				sumPoint = new Point(temp);
 			} else {
-				sumpoint = Point.addPoints(sumPoint, temp);
+				sumPoint = Point.addPoints(sumPoint, temp);
 			}
 			counter ++;
 		}
 		// change global variable
-		KMeans.centroids[idIndex] = Point.multiplyScalar(sumpoint, 1 / counter);
+		KMeans.centroids.set(idIndex, Point.multiplyScalar(sumPoint, 1 / counter));
 		
 	}
 }

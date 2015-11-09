@@ -8,12 +8,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
+import java.util.List;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class UpdateJobRunner
-{
+{	
     /**
      * Create a map-reduce job to update the current centroids.
      * @param jobId Some arbitrary number so that Hadoop can create a directory "<outputDirectory>/<jobname>_<jobId>"
@@ -27,6 +28,14 @@ public class UpdateJobRunner
     public static Job createUpdateJob(int jobId, String inputDirectory, String outputDirectory)
         throws IOException
     {
+		//Get inputs
+		List<String> lines = Point.readTxtFile(inputDirectory);
+		Point[] inputPoints = new Point[lines.size()];
+		for (int i =  0; i< lines.size(); i++){
+			Point temp = new Point(lines.get(i));
+			inputPoints[i] = temp;
+		}
+		
         System.out.println("TODO");
         System.exit(1);
         return null;

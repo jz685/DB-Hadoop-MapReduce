@@ -11,22 +11,22 @@ import java.io.IOException;
  */
 public class PointToClusterMapper extends Mapper<Text, Text, Text, Text>
 {
-	
-	public void map(Point inputPoint, Text value, Context context) {
-		// Assume KMeans.centroids is a array of Point
-		Point[] myCentroIds = KMeans.centroids;
+	public Text thepoint = new Text();
+	public Text index = new Text();
+
+	public void map(Point inputPoint, Text value, Context context) throws IOException, InterruptedException{
 
 		// Assuming KMeans.centroids has length > 1
-		float dist = Point.distance(inputPoint, KMeans.centroids[0]);
+		float dist = Point.distance(inputPoint, KMeans.centroids.get(0));
 
 		int idIndex = 0;
-		for (int i = 1; i < myCentroIds.length; i ++){
-			if (Point.distance(inputPoint, KMeans.centroids[0]) > dist){
+		for (int i = 1; i < KMeans.centroids.size(); i ++){
+			if (Point.distance(inputPoint, KMeans.centroids.get(i)) > dist){
 				idIndex = i;
 			}
 		}
-		// Emit Type: (int, Point)
-		context.write(idIndex, inputPoint);
-
+		thepoint.set(inputPoint.toString());
+		index.set(String.valueOf(idIndex));
+		context.write(index, thepoint);
 	}
 }
