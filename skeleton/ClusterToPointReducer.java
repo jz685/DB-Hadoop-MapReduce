@@ -14,7 +14,7 @@ public class ClusterToPointReducer extends Reducer<Text, Text, Text, Text>
 {
 
 	public void reduce (Text idIndex, Iterable<Text> pointItr, Context context){
-		int counter = 0;
+		float counter = 0;
 		Point sumPoint = null;
 
 		//Testing
