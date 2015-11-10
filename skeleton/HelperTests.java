@@ -1,4 +1,9 @@
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.io.file.tfile.ByteArray;
 import org.junit.*;
+
+import java.io.*;
+
 import static org.junit.Assert.*;
 
 public class HelperTests
@@ -54,5 +59,39 @@ public class HelperTests
     
         assertEquals("0.0 0.0 0.0", Point.multiplyScalar(p1, 3).toString());
         assertEquals("2.5 5.0 5.0", Point.multiplyScalar(p2, (float)2.5).toString());
+    }
+
+    @Test
+    public void point_additional_test1() {
+        Point p1 = new Point(3);
+        Point p2 = new Point("1.23 2.46 3.52 4.79");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DataOutputStream dataOut = null;
+        DataInputStream dataIn = null;
+        try {
+            dataOut = new DataOutputStream(out);
+            p2.write(dataOut);
+            byte[] byteOutput = out.toByteArray();
+            ByteArrayInputStream in = new ByteArrayInputStream(byteOutput);
+            dataIn = new DataInputStream(in);
+            p1.readFields(dataIn);
+            assertEquals(p1.hashCode(), p2.hashCode());
+            assertEquals("1.23 2.46 3.52 4.79", p2.toString());
+            assertEquals("1.23 2.46 3.52 4.79", p1.toString());
+            assertEquals(p1.hashCode(), p2.hashCode());
+        } catch (IOException ex) {
+            System.out.println("IO Exception");
+        }
+    }
+
+    @Test
+    public void point_compare_test1() {
+        Point p1 = new Point("1.23 2.46 3.52 4.80");
+        Point p2 = new Point("1.23 2.46 3.52 4.79");
+        Point p3 = new Point("1.23 2.46 3.52 4.79");
+        Point p4 = new Point("1.23 2.46 3.42 4.79");
+        assertEquals((p2.compareTo(p3) == 0), true);
+        assertEquals((p1.compareTo(p2) == 1), true);
+        assertEquals((p4.compareTo(p3) == -1), true);
     }
 } 
