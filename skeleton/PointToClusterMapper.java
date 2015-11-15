@@ -30,8 +30,7 @@ public class PointToClusterMapper extends Mapper<Text, Text, IntWritable, Point>
 				minCentroidIndex = i;
 			}
 		}
-		//DEBUG!
-		System.out.println("Centroid Index: " + minCentroidIndex + "Point: " + point);
+		
 		IntWritable centroidIndexWritable = new IntWritable(minCentroidIndex);
 		context.write(centroidIndexWritable, point);
 	}
