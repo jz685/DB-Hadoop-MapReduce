@@ -17,6 +17,7 @@ import java.util.Date;
 
 public class UpdateJobRunner
 {
+    private final static float EPSILON = 0.00001f;
     /**
      * Create a map-reduce job to update the current centroids.
      * @param jobId Some arbitrary number so that Hadoop can create a directory "<outputDirectory>/<jobname>_<jobId>"
@@ -76,6 +77,7 @@ public class UpdateJobRunner
             if (!centroidsChanged(oldPoints, KMeans.centroids)) {
                 break;
             }
+            oldPoints = new ArrayList<>(KMeans.centroids);
         }
 
         return iterations;
@@ -89,7 +91,7 @@ public class UpdateJobRunner
         for (int i = 0; i < dimension; i++) {
             Point oldPoint = oldPoints.get(i);
             Point newPoint = newPoints.get(i);
-            if (Point.distance(oldPoint, newPoint) > 0.00001) {
+            if (Point.distance(oldPoint, newPoint) > EPSILON) {
                 return true;
             }
         }

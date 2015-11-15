@@ -6,8 +6,10 @@ import java.lang.Override;
 import java.lang.System;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import org.apache.hadoop.io.*; // Writable
+
 
 /**
  * A Point is some ordered list of floats.
@@ -22,8 +24,8 @@ public class Point implements WritableComparable<Point> {
 
     /* Dimension */
     private int DIMENSION;
-    /* POINTS list */
-    private List<Float> POINTS;
+    /* POINTS array */
+    private float[] POINTS;
     /* Hashcode uses String hashCode */
     private int hash;
 
@@ -33,12 +35,12 @@ public class Point implements WritableComparable<Point> {
     public Point() {
         // Set dimension to 3
         this.DIMENSION = 3;
-        this.POINTS = new ArrayList<>(3);
+        this.POINTS = new float[3];
         // Initialize hashcode to 0
         this.hash = 0;
         // Initialize Points to 0.0
         for (int i = 0; i < this.DIMENSION; i++) {
-            this.POINTS.add(0.0f);
+            this.POINTS[i] = 0.0f;
         }
     }
 
@@ -56,12 +58,12 @@ public class Point implements WritableComparable<Point> {
 
         // Set dimension to dim
         this.DIMENSION = dim;
-        this.POINTS = new ArrayList<>(dim);
+        this.POINTS = new float[dim];
         // Initialize hashcode to 0
         this.hash = 0;
         // Initialize Points to 0.0
         for (int i = 0; i < this.DIMENSION; i++) {
-            this.POINTS.add(0.0f);
+            this.POINTS[i] = 0.0f;
         }
     }
 
@@ -88,7 +90,7 @@ public class Point implements WritableComparable<Point> {
         }
         // Initialize POINTS and DIMENSION
         this.DIMENSION = pointsStr.length;
-        this.POINTS = new ArrayList<>(this.DIMENSION);
+        this.POINTS = new float[this.DIMENSION];
         // Initialize hash to str's hashCode
         this.hash = str.hashCode();
 
@@ -96,7 +98,7 @@ public class Point implements WritableComparable<Point> {
         for (int i = 0; i < this.DIMENSION; i++) {
             // Parse String to a float
             float coordinate = Float.parseFloat(pointsStr[i]);
-            this.POINTS.add(coordinate);
+            this.POINTS[i] = coordinate;
         }
 
     }
@@ -107,12 +109,12 @@ public class Point implements WritableComparable<Point> {
      * Given the Float list List<Float>=[1.0, 2.0, 3.1]
      * Produce a Point {x_0=1.0, x_1=2.0, x_2=3.1}
      */
-    public Point(List<Float> pointsList) {
-        if (pointsList == null || pointsList.size() == 0) {
+    public Point(float[] pointsList) {
+        if (pointsList == null || pointsList.length == 0) {
             throw new IllegalArgumentException("Points List malformated");
         }
-        this.DIMENSION = pointsList.size();
-        this.POINTS = new ArrayList<>(pointsList);
+        this.DIMENSION = pointsList.length;
+        this.POINTS = Arrays.copyOf(pointsList, pointsList.length);
         this.hash = 0;
     }
 
@@ -148,10 +150,10 @@ public class Point implements WritableComparable<Point> {
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
-        int size = this.POINTS.size();
+        int size = this.POINTS.length;
 
         for (int i = 0; i < size; i++) {
-            sb.append(this.POINTS.get(i).floatValue());
+            sb.append(this.POINTS[i]);
             if (i != size - 1) {
                 sb.append(" ");
             }
@@ -172,14 +174,14 @@ public class Point implements WritableComparable<Point> {
         Point other = o;
         // Find the max dimension
         int maxDim = Math.max(other.getDimension(), this.getDimension());
-        List<Float> thisPointList = this.POINTS;
-        List<Float> otherPoints = other.getPointsList();
-        int otherSize = otherPoints.size();
+        float[] thisPointList = this.POINTS;
+        float[] otherPoints = other.getPointsList();
+        int otherSize = otherPoints.length;
 
         // If dimension is different, we assume other coodinates are 0.0 for lower dimension point
         for (int i = 0; i < maxDim; i++) {
-            float thisCoordinate = i < this.getDimension() ? thisPointList.get(i) : 0.0f;
-            float otherCoordinate = i < otherSize ? otherPoints.get(i) : 0.0f;
+            float thisCoordinate = i < this.getDimension() ? thisPointList[i] : 0.0f;
+            float otherCoordinate = i < otherSize ? otherPoints[i] : 0.0f;
             if (thisCoordinate < otherCoordinate) {
                 return -1;
             } else if (thisCoordinate > otherCoordinate) {
@@ -201,15 +203,15 @@ public class Point implements WritableComparable<Point> {
         // Obtain the max dimension of two points
         int maxDimension = Math.max(x.getDimension(), y.getDimension());
         // Obtain xPoint list and yPoint list
-        List<Float> xPoint = x.getPointsList();
-        int xSize = xPoint.size();
-        List<Float> yPoint = y.getPointsList();
-        int ySize =  yPoint.size();
+        float[] xPoint = x.getPointsList();
+        int xSize = xPoint.length;
+        float[] yPoint = y.getPointsList();
+        int ySize =  yPoint.length;
 
         // Calculate Sum of (xCoordinate - yCoordinate)^2
         for (int i = 0; i < maxDimension; i++) {
-            float xCoordinate = i < xSize ? xPoint.get(i) : 0.0f;
-            float yCoordinate = i < ySize ? yPoint.get(i) : 0.0f;
+            float xCoordinate = i < xSize ? xPoint[i] : 0.0f;
+            float yCoordinate = i < ySize ? yPoint[i] : 0.0f;
             float squareCoordinate = (float) Math.pow(xCoordinate - yCoordinate, 2);
             squareSum += squareCoordinate;
         }
@@ -231,17 +233,17 @@ public class Point implements WritableComparable<Point> {
         // Obtain the max dimension of two points
         int maxDimension = Math.max(x.getDimension(), y.getDimension());
         // Obtain xPoint list and yPoint list
-        List<Float> xPoint = x.getPointsList();
-        int xSize = xPoint.size();
-        List<Float> yPoint = y.getPointsList();
-        int ySize =  yPoint.size();
+        float[] xPoint = x.getPointsList();
+        int xSize = xPoint.length;
+        float[] yPoint = y.getPointsList();
+        int ySize =  yPoint.length;
         // A new points list for the new point
-        List<Float> pointsList = new ArrayList<>(maxDimension);
+        float[] pointsList = new float[maxDimension];
 
         for (int i = 0; i < maxDimension; i++) {
-            float xCoordinate = i < xSize ? xPoint.get(i) : 0.0f;
-            float yCoordinate = i < ySize ? yPoint.get(i) : 0.0f;
-            pointsList.add(xCoordinate + yCoordinate);
+            float xCoordinate = i < xSize ? xPoint[i] : 0.0f;
+            float yCoordinate = i < ySize ? yPoint[i] : 0.0f;
+            pointsList[i] = xCoordinate + yCoordinate;
         }
         return new Point(pointsList);
     }
@@ -251,13 +253,13 @@ public class Point implements WritableComparable<Point> {
      */
     public static final Point multiplyScalar(Point x, float c)
     {
-        List<Float> pointsList = x.getPointsList();
-        int size = pointsList.size();
-        List<Float> multiplePointsList = new ArrayList<>(size);
+        float[] pointsList = x.getPointsList();
+        int size = pointsList.length;
+        float[] multiplePointsList = new float[size];
 
         for (int i = 0; i < size; i++) {
-            float multiplyResult = c * pointsList.get(i);
-            multiplePointsList.add(multiplyResult);
+            float multiplyResult = c * pointsList[i];
+            multiplePointsList[i] = multiplyResult;
         }
 
         return new Point(multiplePointsList);
@@ -289,7 +291,7 @@ public class Point implements WritableComparable<Point> {
         out.writeInt(this.DIMENSION);
         // Write all points
         for (int i = 0; i < this.DIMENSION; i++) {
-            out.writeFloat(this.POINTS.get(i).floatValue());
+            out.writeFloat(this.POINTS[i]);
         }
     }
 
@@ -304,10 +306,10 @@ public class Point implements WritableComparable<Point> {
         int dimension = in.readInt();
 
         // Initialize POINTS and DIMENSION
-        List<Float> newPoints = new ArrayList<>(dimension);
+        float[] newPoints = new float[dimension];
         // Read floats from input
         for (int i = 0; i < dimension; i++) {
-            newPoints.add(in.readFloat());
+            newPoints[i] = in.readFloat();
         }
 
         // Initialize dimension points and hash
@@ -330,9 +332,9 @@ public class Point implements WritableComparable<Point> {
 
     /**
      * Get copied Points list
-     * @return A Copied Double List contains all coordinates
+     * @return A List contains all coordinates
      */
-    public List<Float> getPointsList() {
-        return new ArrayList<>(this.POINTS);
+    public float[] getPointsList() {
+        return Arrays.copyOf(this.POINTS, this.POINTS.length);
     }
 }

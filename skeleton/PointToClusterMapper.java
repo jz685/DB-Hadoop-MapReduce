@@ -22,6 +22,7 @@ public class PointToClusterMapper extends Mapper<Text, Text, IntWritable, Point>
 		int pointLen = centroids.size();
 		Point point = new Point(key.toString());
 
+		// Iterate centroid points to find the closest centroid index
 		for (int i = 0; i < pointLen; i++) {
 			Point centroidPoint = centroids.get(i);
 			distance = Point.distance(centroidPoint, point);
@@ -31,6 +32,7 @@ public class PointToClusterMapper extends Mapper<Text, Text, IntWritable, Point>
 			}
 		}
 		
+		// Write min Index and corresponding point to the context
 		IntWritable centroidIndexWritable = new IntWritable(minCentroidIndex);
 		context.write(centroidIndexWritable, point);
 	}
