@@ -2,37 +2,35 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import java.util.ArrayList;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 /** 
  * You can modify this class as you see fit, as long as you correctly update the
  * global centroids.
  */
-public class ClusterToPointReducer extends Reducer<Text, Text, Text, Text>
+public class ClusterToPointReducer extends Reducer<IntWritable, Point, IntWritable, Text>
 {
+	public void reduce(IntWritable centroidIndex, Iterable<Point> points, Context context) throws IOException, InterruptedException {
+		int pointsLen = 0;
+		Iterator<Point> pointIterator = points.iterator();
+		Point additionPoint = null;
 
-	public void reduce (Text idIndex, Iterable<Text> pointItr, Context context){
-		float counter = 0;
-		Point sumPoint = null;
-
-		//Testing
-		System.out.println("<RED> value of <Text>index: " + idIndex.toString());
-
-		int index = Integer.parseInt(idIndex.toString());
-
-		for (Text temp : pointItr){
-			Point tempPoint = new Point(temp.toString());
-			if (sumPoint == null){
-				sumPoint = new Point(tempPoint);
+		// Iterate all points and add together
+		while (pointIterator.hasNext()) {
+			pointsLen++;
+			Point point = pointIterator.next();
+			if (additionPoint == null) {
+				additionPoint = new Point(point);
 			} else {
-				sumPoint = Point.addPoints(sumPoint, tempPoint);
+				additionPoint = Point.addPoints(additionPoint, point);
 			}
-			counter ++;
 		}
-		// change global variable
-		KMeans.centroids.set(index, Point.multiplyScalar(sumPoint, 1 / counter));
-		
+
+		// Calculate new centroid point
+		Point newCentroidPoint = Point.multiplyScalar(additionPoint, 1.0f / pointsLen);
+		// Update KMeans centroid
+		KMeans.centroids.set(centroidIndex.get(), newCentroidPoint);
 	}
 }

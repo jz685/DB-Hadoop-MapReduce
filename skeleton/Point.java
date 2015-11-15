@@ -1,14 +1,13 @@
 import java.io.*; // DataInput/DataOuput
+import java.io.DataInput;
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.Override;
+import java.lang.System;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.apache.hadoop.io.*; // Writable
-
-import java.nio.file.Files;
-import java.util.List;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 /**
  * A Point is some ordered list of floats.
@@ -19,9 +18,29 @@ import java.nio.charset.StandardCharsets;
  * NOTE: This implementation is NOT complete.  As mentioned above, you need
  * to implement WritableComparable at minimum.  Modify this class as you see fit.
  */
-public class Point {
+public class Point implements WritableComparable<Point> {
 
-    float[] coords;
+    /* Dimension */
+    private int DIMENSION;
+    /* POINTS list */
+    private List<Float> POINTS;
+    /* Hashcode uses String hashCode */
+    private int hash;
+
+    /**
+     * Constructing an empty three dimension point
+     */
+    public Point() {
+        // Set dimension to 3
+        this.DIMENSION = 3;
+        this.POINTS = new ArrayList<>(3);
+        // Initialize hashcode to 0
+        this.hash = 0;
+        // Initialize Points to 0.0
+        for (int i = 0; i < this.DIMENSION; i++) {
+            this.POINTS.add(0.0f);
+        }
+    }
 
     /**
      * Construct a Point with the given dimensions [dim]. The coordinates should all be 0.
@@ -30,7 +49,20 @@ public class Point {
      */
     public Point(int dim)
     {
-        coords = new float[dim];
+        // If dimension less equal to 0
+        if (dim <= 0) {
+            throw new IllegalArgumentException("Dimension <= 0");
+        }
+
+        // Set dimension to dim
+        this.DIMENSION = dim;
+        this.POINTS = new ArrayList<>(dim);
+        // Initialize hashcode to 0
+        this.hash = 0;
+        // Initialize Points to 0.0
+        for (int i = 0; i < this.DIMENSION; i++) {
+            this.POINTS.add(0.0f);
+        }
     }
 
     /**
@@ -42,13 +74,46 @@ public class Point {
      */
     public Point(String str)
     {
-        String[] parts = str.split(" ");
-		
-		coords = new float[parts.length];
-		for (int i = 0; i < parts.length; i ++){
-			//System.out.println(parts[i]);
-			coords[i] = Float.parseFloat(parts[i]);
-		}
+        // Validity Check
+        if (str == null || str.length() == 0) {
+            throw new IllegalArgumentException("Point String malformated");
+        }
+
+        // Obtain space-delimited points list
+        String[] pointsStr = str.split(" ");
+
+        // If splited list is not correct
+        if (pointsStr.length == 0) {
+            throw new IllegalArgumentException("Points List malformated");
+        }
+        // Initialize POINTS and DIMENSION
+        this.DIMENSION = pointsStr.length;
+        this.POINTS = new ArrayList<>(this.DIMENSION);
+        // Initialize hash to str's hashCode
+        this.hash = str.hashCode();
+
+        // Add coordinate to the POINTS list
+        for (int i = 0; i < this.DIMENSION; i++) {
+            // Parse String to a float
+            float coordinate = Float.parseFloat(pointsStr[i]);
+            this.POINTS.add(coordinate);
+        }
+
+    }
+
+    /**
+     * Construct a point from a Float list
+     * @param Float coordinate list.
+     * Given the Float list List<Float>=[1.0, 2.0, 3.1]
+     * Produce a Point {x_0=1.0, x_1=2.0, x_2=3.1}
+     */
+    public Point(List<Float> pointsList) {
+        if (pointsList == null || pointsList.size() == 0) {
+            throw new IllegalArgumentException("Points List malformated");
+        }
+        this.DIMENSION = pointsList.size();
+        this.POINTS = new ArrayList<>(pointsList);
+        this.hash = 0;
     }
 
     /**
@@ -56,10 +121,11 @@ public class Point {
      */
     public Point(Point other)
     {
-        this.coords = new float[other.coords.length];
-		for (int i = 0; i < coords.length; i++){
-			this.coords[i] = other.coords[i];
-		}
+        // Copy other's dimension and points
+        this.DIMENSION = other.getDimension();
+        // This returns a new point list
+        this.POINTS = other.getPointsList();
+        this.hash = other.hashCode();
     }
 
     /**
@@ -68,7 +134,7 @@ public class Point {
      */
     public int getDimension()
     {
-        return coords.length;
+        return this.DIMENSION;
     }
 
     /**
@@ -78,14 +144,20 @@ public class Point {
      * Given a point with coordinates {x=1, y=1, z=3}
      * Return the string "1 1 3"
      */
+    @Override
     public String toString()
     {
-        StringBuilder result = new StringBuilder();
-		for (int i = 0; i < coords.length; i++){
-			result.append(coords[i]);
-			if(i < (coords.length - 1)) result.append(" ");
-		}
-        return result.toString();
+        StringBuilder sb = new StringBuilder();
+        int size = this.POINTS.size();
+
+        for (int i = 0; i < size; i++) {
+            sb.append(this.POINTS.get(i).floatValue());
+            if (i != size - 1) {
+                sb.append(" ");
+            }
+        }
+
+        return sb.toString();
     }
 
     /**
@@ -94,16 +166,28 @@ public class Point {
      * You should order the points "lexicographically" in the order of the coordinates.
      * Comparing two points of different dimensions results in undefined behavior.
      */
-	// ?? why Object?
-    public int compareTo(Object o)
-    {   
-        float[] thisArray = this.coords;
-		float[] thatArray = ((Point)o).coords;
-		if (thisArray.length != thatArray.length) throw new IllegalArgumentException("Different dimensions");
-		for (int i = 0; i < thisArray.length; i ++){
-			if (thisArray[i] < thatArray[i]) return -1;
-			if (thisArray[i] > thatArray[i]) return  1;
-		}
+    public int compareTo(Point o)
+    {
+        // Only compares if o is a Point
+        Point other = o;
+        // Find the max dimension
+        int maxDim = Math.max(other.getDimension(), this.getDimension());
+        List<Float> thisPointList = this.POINTS;
+        List<Float> otherPoints = other.getPointsList();
+        int otherSize = otherPoints.size();
+
+        // If dimension is different, we assume other coodinates are 0.0 for lower dimension point
+        for (int i = 0; i < maxDim; i++) {
+            float thisCoordinate = i < this.getDimension() ? thisPointList.get(i) : 0.0f;
+            float otherCoordinate = i < otherSize ? otherPoints.get(i) : 0.0f;
+            if (thisCoordinate < otherCoordinate) {
+                return -1;
+            } else if (thisCoordinate > otherCoordinate) {
+                return 1;
+            } else {
+                continue;
+            }
+        }
         return 0;
     }
 
@@ -112,19 +196,27 @@ public class Point {
      */
     public static final float distance(Point x, Point y)
     {
-		float[] xcoords = x.coords;
-		float[] ycoords = y.coords;
-		float result = 0;
-		if (xcoords.length != ycoords.length) throw new IllegalArgumentException("Different dimensions");
-        float[] diffs = new float[xcoords.length];
-		for(int i = 0; i < diffs.length; i ++){
-			diffs[i] = Math.abs(xcoords[i] - ycoords[i]);
-		}
-		for(int i = 0; i < diffs.length; i ++){
-			result += diffs[i] * diffs[i];
-		}
-		
-        return (float)Math.sqrt(result);
+        float distance = 0.0f;
+        float squareSum = 0.0f;
+        // Obtain the max dimension of two points
+        int maxDimension = Math.max(x.getDimension(), y.getDimension());
+        // Obtain xPoint list and yPoint list
+        List<Float> xPoint = x.getPointsList();
+        int xSize = xPoint.size();
+        List<Float> yPoint = y.getPointsList();
+        int ySize =  yPoint.size();
+
+        // Calculate Sum of (xCoordinate - yCoordinate)^2
+        for (int i = 0; i < maxDimension; i++) {
+            float xCoordinate = i < xSize ? xPoint.get(i) : 0.0f;
+            float yCoordinate = i < ySize ? yPoint.get(i) : 0.0f;
+            float squareCoordinate = (float) Math.pow(xCoordinate - yCoordinate, 2);
+            squareSum += squareCoordinate;
+        }
+
+        // Distance is the square root of the sum
+        distance = (float) Math.sqrt(squareSum);
+        return distance;
     }
 
     /**
@@ -132,56 +224,115 @@ public class Point {
      */
     public static final Point addPoints(Point x, Point y)
     {
-        float[] xcoords = x.coords;
-		float[] ycoords = y.coords;
-		if (xcoords.length != ycoords.length) throw new IllegalArgumentException("Different dimensions");
+        // Validity check
+        if (x == null || y == null) {
+            return null;
+        }
+        // Obtain the max dimension of two points
+        int maxDimension = Math.max(x.getDimension(), y.getDimension());
+        // Obtain xPoint list and yPoint list
+        List<Float> xPoint = x.getPointsList();
+        int xSize = xPoint.size();
+        List<Float> yPoint = y.getPointsList();
+        int ySize =  yPoint.size();
+        // A new points list for the new point
+        List<Float> pointsList = new ArrayList<>(maxDimension);
 
-		Point result = new Point(xcoords.length);
-		for(int i = 0; i < xcoords.length; i ++){
-			result.coords[i] = (xcoords[i] + ycoords[i]);
-		}
-        return result;
+        for (int i = 0; i < maxDimension; i++) {
+            float xCoordinate = i < xSize ? xPoint.get(i) : 0.0f;
+            float yCoordinate = i < ySize ? yPoint.get(i) : 0.0f;
+            pointsList.add(xCoordinate + yCoordinate);
+        }
+        return new Point(pointsList);
     }
 
     /**
      * @return A new point equal to [c][x]
      */
-	// USE FLOAT
     public static final Point multiplyScalar(Point x, float c)
     {
-        float[] xcoords = x.coords;
+        List<Float> pointsList = x.getPointsList();
+        int size = pointsList.size();
+        List<Float> multiplePointsList = new ArrayList<>(size);
 
-		Point result = new Point(xcoords.length);
-		for(int i = 0; i < xcoords.length; i ++){
-			result.coords[i] = xcoords[i] * c;
-		}
-        return result;
+        for (int i = 0; i < size; i++) {
+            float multiplyResult = c * pointsList.get(i);
+            multiplePointsList.add(multiplyResult);
+        }
+
+        return new Point(multiplePointsList);
     }
 
+    /**
+     * WritableComparable method hashcode
+     * We use String hashcode to ensure on different machine, hashcodes are the same
+     * @return String hashCode
+     */
+    @Override
+    public int hashCode() {
+        // Return hash if it calculated before
+        if (this.hash != 0) {
+            return this.hash;
+        }
+        // Get serialized string's hashCode
+        this.hash = this.toString().hashCode();
+        return this.hash;
+    }
 
-	public static List<String> readTxtFile(String aFileName) throws IOException {
-    	Path path = Paths.get(aFileName);
-    	return Files.readAllLines(path, StandardCharsets.UTF_8);
-	}
-//*
-//	// For Testing Purpose
-//	public static void main(String[] args){
-//		Point p0 = null;
-//		p0 = new Point("1 2");
-//		System.out.println("Print p0: " + p0.toString());
-//		//
-//		Point p1 = new Point(3);
-//		Point p2 = new Point("1 2 3 4");
-//		Point p3 = new Point(p2);
-//		Point p4 = new Point(4);
-//		//System.out.println("Dim of p1: " + p1.getDimension());
-//		//System.out.println("Print p2: " + p2.toString());
-//		//System.out.println("Compare p2 to p4: " + p2.compareTo(p4));
-//		//System.out.println("Compare p2 to p1: " + p2.compareTo(p1));
-//		//System.out.println("Distance between p2 and p4 is: " + distance(p2, p4));
-//		//System.out.println("Print p2 + p4: " + addPoints(p4, p2));
-//		//System.out.println("Print p2 * 2: " + multiplyScalar(p2, 2));
-//	}
-//
+    /**
+     *  WritableComparable method write
+     * Write Int as Dimension and write doubles from POINTS
+     */
+    @Override
+    public void write(DataOutput out) throws IOException {
+        // Write DIMENSION
+        out.writeInt(this.DIMENSION);
+        // Write all points
+        for (int i = 0; i < this.DIMENSION; i++) {
+            out.writeFloat(this.POINTS.get(i).floatValue());
+        }
+    }
 
+    /**
+     * WritableComparable readFields
+     * @param in
+     * @throws IOException
+     */
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        // Read String from the input
+        int dimension = in.readInt();
+
+        // Initialize POINTS and DIMENSION
+        List<Float> newPoints = new ArrayList<>(dimension);
+        // Read floats from input
+        for (int i = 0; i < dimension; i++) {
+            newPoints.add(in.readFloat());
+        }
+
+        // Initialize dimension points and hash
+        this.DIMENSION = dimension;
+        this.POINTS = newPoints;
+        this.hash = 0;
+    }
+
+    /**
+     * Writable method read
+     * @param in
+     * @return A new instance of Point
+     * @throws IOException
+     */
+    public static Point read(DataInput in) throws IOException {
+        Point point = new Point(3);
+        point.readFields(in);
+        return point;
+    }
+
+    /**
+     * Get copied Points list
+     * @return A Copied Double List contains all coordinates
+     */
+    public List<Float> getPointsList() {
+        return new ArrayList<>(this.POINTS);
+    }
 }

@@ -8,13 +8,15 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
-import java.util.List;
+//import org.apache.hadoop.mapreduce.lib.InputFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Date;
 
 public class UpdateJobRunner
-{	
+{
     /**
      * Create a map-reduce job to update the current centroids.
      * @param jobId Some arbitrary number so that Hadoop can create a directory "<outputDirectory>/<jobname>_<jobId>"
@@ -28,17 +30,18 @@ public class UpdateJobRunner
     public static Job createUpdateJob(int jobId, String inputDirectory, String outputDirectory)
         throws IOException
     {
-		//Get inputs
-		List<String> lines = Point.readTxtFile(inputDirectory);
-		Point[] inputPoints = new Point[lines.size()];
-		for (int i =  0; i< lines.size(); i++){
-			Point temp = new Point(lines.get(i));
-			inputPoints[i] = temp;
-		}
-		
-        System.out.println("TODO");
-        System.exit(1);
-        return null;
+        Job job = new Job(new Configuration(), "kmeans_update_" + jobId);
+        job.setJarByClass(KMeans.class);
+        job.setMapperClass(PointToClusterMapper.class);
+        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputValueClass(Point.class);
+        job.setReducerClass(ClusterToPointReducer.class);
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(Point.class);
+        FileInputFormat.addInputPath(job, new Path(inputDirectory));
+        FileOutputFormat.setOutputPath(job, new Path(outputDirectory + "/" + job.getJobName()));
+        job.setInputFormatClass(KeyValueTextInputFormat.class);
+        return job;
     }
 
     /**
@@ -57,10 +60,40 @@ public class UpdateJobRunner
      * @return The number of iterations that were executed.
      */
     public static int runUpdateJobs(int maxIterations, String inputDirectory,
-        String outputDirectory)
+        String outputDirectory) throws IOException, InterruptedException, ClassNotFoundException
     {
-        System.out.println("TODO");
-        System.exit(1);
-        return 0;
+        int iterations = 0;
+        Job updateJob;
+        List<Point> oldPoints = new ArrayList<>(KMeans.centroids);
+        // Run Job the max iterations
+        for (int i = 0; i < maxIterations; i++) {
+            iterations++;
+            // Create job and run
+            updateJob = createUpdateJob((int)(new Date().getTime()), inputDirectory, outputDirectory);
+            updateJob.waitForCompletion(true);
+
+            // If distance does not changed for old and new centroids
+            if (!centroidsChanged(oldPoints, KMeans.centroids)) {
+                break;
+            }
+        }
+
+        return iterations;
     }
+
+    /**
+     * Check if centroids are changed
+     */
+    private static boolean centroidsChanged(List<Point> oldPoints, List<Point> newPoints) {
+        int dimension = oldPoints.size();
+        for (int i = 0; i < dimension; i++) {
+            Point oldPoint = oldPoints.get(i);
+            Point newPoint = newPoints.get(i);
+            if (Point.distance(oldPoint, newPoint) > 0.00001) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
